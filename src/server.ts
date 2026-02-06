@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { loadProxyConfig, getProxyConfig, updateProxyConfig } from "./config/manager";
 
 await loadProxyConfig();

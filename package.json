@@ -1,7 +1,10 @@
 {
-  "name": "antigravity-llm-proxy",
-  "version": "0.1.1",
-  "module": "index.ts",
+  "name": "antigravity-proxy",
+  "version": "0.1.2",
+  "module": "src/server.ts",
+  "bin": {
+    "antigravity-proxy": "./src/server.ts"
+  },
   "type": "module",
   "scripts": {
     "start": "bun run src/server.ts",
