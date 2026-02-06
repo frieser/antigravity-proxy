@@ -23,7 +23,7 @@ This project is strongly inspired by [opencode-antigravity-auth](https://github.
 ### Bunx (Recommended)
 You can run the proxy instantly using `bunx`:
 ```bash
-bunx antigravity-proxy
+bunx antigravity-proxy@0.1.2
 ```
 
 ### Docker Hub
