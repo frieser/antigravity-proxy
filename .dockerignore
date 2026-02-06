@@ -1,0 +1,10 @@
+node_modules
+*.log
+antigravity-accounts.json
+.git
+.gitignore
+README.md
+AGENTS.md
+proxy.log
+server.log
+bun.lockb

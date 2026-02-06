@@ -1,0 +1,11 @@
+services:
+  proxy:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - ACCOUNTS_FILE=/app/data/antigravity-accounts.json
+      - BASE_URL=http://127.0.0.1:3000
+    volumes:
+      - ./data:/app/data:z
+    restart: unless-stopped

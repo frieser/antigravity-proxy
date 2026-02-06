@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Console</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-200 h-full flex flex-col transition-colors duration-300 overflow-hidden font-mono selection:bg-emerald-500/30 selection:text-emerald-700 dark:selection:text-emerald-200">
+
+    <div id="header-container"></div>
+    <main id="main-container" class="flex-grow flex flex-col h-[calc(100vh-4rem)] overflow-hidden"></main>
+    <div id="modal-container"></div>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function loadComponent(id, url) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`Failed to load ${url}`);
+                document.getElementById(id).innerHTML = await res.text();
+            } catch (e) {
+                console.error(e);
+                document.getElementById(id).innerHTML = `<div class="p-4 text-rose-500">Error loading component: ${e.message}</div>`;
+            }
+        }
+
+        (async () => {
+            await Promise.all([
+                loadComponent('header-container', 'components/header.html'),
+                loadComponent('main-container', 'components/main.html'),
+                loadComponent('modal-container', 'components/config-modal.html')
+            ]);
+            
+            if (window.initializeApp) {
+                window.initializeApp();
+            }
+        })();
+    </script>
+</body>
+</html>

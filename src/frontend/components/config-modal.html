@@ -1,0 +1,109 @@
+<div id="config-modal" class="hidden fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-colors">
+    <div class="bg-white dark:bg-[#050505] rounded shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-zinc-200 dark:border-zinc-800 transition-colors">
+        <div class="sticky top-0 bg-white dark:bg-[#050505] border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between z-10 transition-colors">
+            <h2 class="text-lg font-bold text-zinc-900 dark:text-white uppercase tracking-wider transition-colors">Configuration</h2>
+            <button onclick="closeConfigModal()" class="text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        
+        <div class="p-6 space-y-8 font-mono">
+            <div>
+                <h3 class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Rotation Strategy
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Cooldown Default (ms)</label>
+                        <input type="number" id="cfg-cooldown-default" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Cooldown Max (ms)</label>
+                        <input type="number" id="cfg-cooldown-max" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Health Scoring
+                </h3>
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Min Health</label>
+                        <input type="number" id="cfg-health-min" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Max Health</label>
+                        <input type="number" id="cfg-health-max" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Initial Health</label>
+                        <input type="number" id="cfg-health-initial" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">API Error Penalty</label>
+                        <input type="number" id="cfg-penalty-api" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Refresh Error Penalty</label>
+                        <input type="number" id="cfg-penalty-refresh" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Success Reward</label>
+                        <input type="number" id="cfg-reward-success" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Health Weight</label>
+                        <input type="number" step="0.1" id="cfg-weight-health" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">LRU Weight</label>
+                        <input type="number" step="0.01" id="cfg-weight-lru" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    Model Blacklist
+                </h3>
+                <textarea id="cfg-blacklist" rows="3" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors font-mono" placeholder="One model per line"></textarea>
+                <p class="text-[10px] text-zinc-600 dark:text-zinc-600 mt-1 uppercase tracking-wide">Enter model names to block, one per line</p>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Retry Configuration
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Max Attempts</label>
+                        <input type="number" id="cfg-retry-max" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wide">Transient Retry Threshold (s)</label>
+                        <input type="number" id="cfg-retry-threshold" class="w-full px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-white focus:border-zinc-400 dark:focus:border-zinc-600 focus:outline-none transition-colors" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sticky bottom-0 bg-white dark:bg-[#050505] border-t border-zinc-200 dark:border-zinc-800 px-6 py-4 flex justify-end gap-3 z-10 transition-colors">
+            <button onclick="closeConfigModal()" class="px-4 py-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white uppercase tracking-wider transition-colors">
+                Cancel
+            </button>
+            <button onclick="saveConfig()" class="px-4 py-2 text-xs font-bold text-white dark:text-black bg-zinc-900 dark:bg-white hover:bg-zinc-700 dark:hover:bg-zinc-200 rounded transition-colors uppercase tracking-wider">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>

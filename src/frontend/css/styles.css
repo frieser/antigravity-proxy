@@ -1,0 +1,53 @@
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.font-mono-dense {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.02em;
+}
+
+tr.flash-active td {
+    animation: flashRow 1s ease-out;
+}
+
+tr.flash-error td {
+    animation: flashRowError 1s ease-out;
+}
+
+@keyframes flashRow {
+    0% { background-color: rgba(16, 185, 129, 0.1); }
+    100% { background-color: transparent; }
+}
+
+@keyframes flashRowError {
+    0% { background-color: rgba(244, 63, 94, 0.1); }
+    100% { background-color: transparent; }
+}
+
+tr td {
+    position: relative;
+}
