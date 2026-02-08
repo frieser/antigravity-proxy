@@ -88,6 +88,28 @@ describe("Unit Tests: transformToGoogleBody", () => {
     expect(result.request.tools[0].functionDeclarations[0].name).toBe("get_weather");
     expect(result.request.tools[0].functionDeclarations[0].parameters.properties.location).toBeDefined();
   });
+
+  test("Claude Opus 4.6 Thinking mapping and budget", () => {
+    const openaiBody = {
+      model: "antigravity-claude-opus-4-6-thinking-high",
+      messages: [{ role: "user", content: "Hi" }]
+    };
+
+    const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
+    expect(result.model).toBe("claude-opus-4-6-thinking");
+    expect(result.request.generationConfig.thinkingConfig.include_thoughts).toBe(true);
+    expect(result.request.generationConfig.thinkingConfig.thinking_budget).toBe(32768);
+  });
+
+  test("Claude Opus 4.6 Thinking Low budget", () => {
+    const openaiBody = {
+      model: "antigravity-claude-opus-4-6-thinking-low",
+      messages: [{ role: "user", content: "Hi" }]
+    };
+
+    const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
+    expect(result.request.generationConfig.thinkingConfig.thinking_budget).toBe(8192);
+  });
 });
 
 describe("Unit Tests: transformGoogleEventToOpenAI", () => {

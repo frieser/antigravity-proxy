@@ -2,7 +2,7 @@
 
 ![Antigravity Proxy Dashboard](screenshots/screenshot.png)
 
-Antigravity Proxy is a high-performance, Bun-native gateway that exposes Google's internal Gemini and CloudCode APIs through an **OpenAI-compatible interface**. It enables seamless integration between advanced models (like Claude 3.5 Sonnet, Gemini 3, and GPT-equivalent models) and CLI agents (such as **OpenCode** or **Claude Code**), as well as any application supporting the OpenAI API standard.
+Antigravity Proxy is a high-performance, Bun-native gateway that exposes Google's internal Gemini and Claude APIs through an **OpenAI-compatible interface**. It enables seamless integration between advanced models (like Claude 3.5 Sonnet, Gemini 3, and GPT-equivalent models) and CLI agents (such as **OpenCode** or **Claude Code**), as well as any application supporting the OpenAI API standard.
 
 This project is strongly inspired by [opencode-antigravity-auth](https://github.com/NoeFabris/opencode-antigravity-auth).
 
@@ -91,6 +91,18 @@ Add the following provider to your `~/.config/opencode/opencode.json` under the 
             "antigravity-claude-sonnet-4-5-thinking-high": {
                 "name": "Claude Sonnet 4.5 Think High (Antigravity)",
                 "limit": { "context": 200000, "output": 64000 }
+            },
+            "antigravity-claude-opus-4-6-thinking-low": {
+                "name": "Claude Opus 4.6 Think Low (Antigravity)",
+                "limit": { "context": 1000000, "output": 64000 }
+            },
+            "antigravity-claude-opus-4-6-thinking-medium": {
+                "name": "Claude Opus 4.6 Think Medium (Antigravity)",
+                "limit": { "context": 1000000, "output": 64000 }
+            },
+            "antigravity-claude-opus-4-6-thinking-high": {
+                "name": "Claude Opus 4.6 Think High (Antigravity)",
+                "limit": { "context": 1000000, "output": 64000 }
             },
             "antigravity-claude-opus-4-5-thinking-low": {
                 "name": "Claude Opus 4.5 Think Low (Antigravity)",

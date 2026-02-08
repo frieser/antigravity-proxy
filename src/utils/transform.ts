@@ -8,6 +8,7 @@ const CLAUDE_MODEL_REGISTRY = [
     "claude-3-5-sonnet-20240620",
     "claude-3-5-haiku-20241022",
     "claude-3-opus-20240229",
+    "claude-opus-4-6-thinking",
     "claude-3-sonnet-20240229",
     "claude-3-haiku-20240307"
 ];
@@ -65,15 +66,19 @@ export function transformToGoogleBody(
   }
 
   // Force Claude model IDs to strip tier for the backend
-  if (googleModel.includes("claude")) {
-      googleModel = googleModel.replace(/-(low|medium|high)$/i, "");
-  }
+        if (googleModel.includes("claude")) {
+            googleModel = baseModel;
+            if (googleModel === "claude-opus-4-6") googleModel = "claude-opus-4-6-thinking";
+            if (googleModel === "claude-opus-4-5") googleModel = "claude-opus-4-5-thinking";
+            if (googleModel === "claude-sonnet-4-5") googleModel = "claude-sonnet-4-5-thinking";
+        }
 
-  const nativelySupported = [
+    const nativelySupported = [
       "claude-sonnet-4-5", 
       "claude-sonnet-4-5-thinking", 
+      "claude-opus-4-6-thinking",
       "claude-opus-4-5-thinking", 
-      "gemini-3-flash", 
+      "gemini-3-flash",
       "gemini-3-pro-high", 
       "gemini-3-pro-low",
       "gemini-3-pro",
@@ -124,9 +129,12 @@ export function transformToGoogleBody(
               googleModel = baseModel;
           }
 
-          if (googleModel === "claude-opus-4-5" || googleModel === "antigravity-claude-opus-4-5") {
-              googleModel = "claude-opus-4-5-thinking";
-          }
+            if (googleModel === "claude-opus-4-6" || googleModel === "antigravity-claude-opus-4-6") {
+                googleModel = "claude-opus-4-6-thinking";
+            }
+            if (googleModel === "claude-opus-4-5" || googleModel === "antigravity-claude-opus-4-5") {
+                googleModel = "claude-opus-4-5-thinking";
+            }
           if (googleModel === "claude-sonnet-4-5" || googleModel === "antigravity-claude-sonnet-4-5") {
               googleModel = "claude-sonnet-4-5-thinking";
           }
@@ -245,7 +253,14 @@ export function transformToGoogleBody(
 
   const isThinkingModel = rawModel.includes("-thinking");
   const hasExplicitBudget = openaiBody.thinking_budget !== undefined;
-  const thinkingBudget = openaiBody.thinking_budget || (isThinkingModel ? 16000 : undefined);
+  
+  let thinkingBudget = openaiBody.thinking_budget;
+  if (!thinkingBudget && isThinkingModel) {
+      if (extractedTier === "low") thinkingBudget = 8192;
+      else if (extractedTier === "medium") thinkingBudget = 16000;
+      else if (extractedTier === "high") thinkingBudget = 32768;
+      else thinkingBudget = 16000;
+  }
   
   const ANTIGRAVITY_SYSTEM_INSTRUCTION = `You are Antigravity, a powerful agentic AI coding assistant designed by the Google DeepMind team working on Advanced Agentic Coding.
 You are pair programming with a USER to solve their coding task. The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
