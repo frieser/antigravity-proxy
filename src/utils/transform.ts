@@ -164,7 +164,6 @@ export function transformToGoogleBody(
       parts.push({
         functionResponse: {
           name: msg.name || "function_result",
-          id: msg.tool_call_id || "call_default",
           response: responseObj
         }
       });
@@ -176,7 +175,7 @@ export function transformToGoogleBody(
           const sig = getSignature(sessionId, thoughtText);
           if (sig) {
             parts.push({ thought: true, text: thoughtText, thoughtSignature: sig });
-          } else if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
+          } else if (googleModel.includes("claude")) {
              // Claude Sandbox/CLI needs signature or sentinel
              parts.push({ thought: true, text: thoughtText, thoughtSignature: SKIP_THOUGHT_SIGNATURE });
           } else {
@@ -225,14 +224,13 @@ export function transformToGoogleBody(
             const funcPart: any = {
               functionCall: {
                 name: tc.function.name,
-                args: typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments || "{}") : tc.function.arguments,
-                id: tc.id
+                args: typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments || "{}") : tc.function.arguments
               }
             };
             
             if (sig) {
               funcPart.thoughtSignature = sig;
-            } else if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
+            } else if (googleModel.includes("claude")) {
               funcPart.thoughtSignature = SKIP_THOUGHT_SIGNATURE;
             }
 
@@ -306,16 +304,13 @@ You are pair programming with a USER to solve their coding task. The task may re
   };
 
   if (isThinkingModel || googleModel.includes("gemini-3")) {
+    googleRequest.generationConfig.thinkingConfig = {
+      includeThoughts: true,
+      thinkingBudget: thinkingBudget || 16000
+    };
+    
     if (googleModel.includes("gemini-3")) {
-        googleRequest.generationConfig.thinkingConfig = {
-          includeThoughts: true,
-          thinkingLevel: extractedTier || "low"
-        };
-    } else {
-        googleRequest.generationConfig.thinkingConfig = {
-          include_thoughts: true,
-          thinking_budget: thinkingBudget || 16000
-        };
+        googleRequest.generationConfig.thinkingConfig.thinkingLevel = extractedTier || "low";
     }
   }
 
