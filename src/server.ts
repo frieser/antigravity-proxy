@@ -140,59 +140,67 @@ Bun.serve({
       const stableSeed = `${userIdent}:${typeof firstMsg === 'string' ? firstMsg : JSON.stringify(firstMsg)}`;
       const sessionId = firstMsg ? new Bun.CryptoHasher("sha256").update(stableSeed).digest("hex") : crypto.randomUUID();
 
-       while (attempts < MAX_ATTEMPTS) {
-           attempts++;
+        let lastStatus = 0;
+        let lastGoogleUrl = "";
 
-           if (attempts > 1) {
-               const delayMs = Math.min(500 * attempts, 3000);
-               await new Promise(r => setTimeout(r, delayMs));
-               
-               if (!isSandboxOnlyModel && !isCliOnlyModel) {
-                   useCliPool = !useCliPool;
-                   console.log(`[Switch] Switching to ${useCliPool ? 'CLI' : 'Sandbox'} pool for attempt ${attempts}`);
-               } else {
-                   console.log(`[Switch] Skipping pool switch for ${isCliOnlyModel ? 'CLI-only' : 'sandbox-only'} model (attempt ${attempts})`);
-               }
-           }
+        while (attempts < MAX_ATTEMPTS) {
+            attempts++;
 
-           let account = await getBestAccount(useCliPool ? "cli" : "sandbox", openaiBody.model, clientId, triedEmails, true);
-           
-           if (!account && !isSandboxOnlyModel && !isCliOnlyModel) {
-               console.log(`[Manager] No READY accounts in ${useCliPool ? 'CLI' : 'Sandbox'} pool, trying the other pool first...`);
-               const otherPool = useCliPool ? "sandbox" : "cli";
-               account = await getBestAccount(otherPool, openaiBody.model, clientId, triedEmails, true);
-               if (account) {
-                   useCliPool = !useCliPool;
-                   console.log(`[Switch] Found ready account in ${useCliPool ? 'CLI' : 'Sandbox'} pool.`);
-               }
-           }
+            if (attempts > 1) {
+                const delayMs = Math.min(500 * attempts, 3000);
+                await new Promise(r => setTimeout(r, delayMs));
+                
+                if (!isSandboxOnlyModel && !isCliOnlyModel && lastStatus !== 503) {
+                    useCliPool = !useCliPool;
+                    console.log(`[Switch] Switching to ${useCliPool ? 'CLI' : 'Sandbox'} pool for attempt ${attempts}`);
+                } else {
+                    console.log(`[Switch] Skipping pool switch for ${isCliOnlyModel ? 'CLI-only' : 'sandbox-only'} model (attempt ${attempts})`);
+                }
+            }
 
-           if (!account) {
-               account = await getBestAccount(useCliPool ? "cli" : "sandbox", openaiBody.model, clientId, triedEmails, false);
-           }
-           
-           if (!account || !account.accessToken) {
-               if (attempts < MAX_ATTEMPTS) {
-                   console.log(`[Switch] Exhausted all accounts in both pools, retrying...`);
-                   triedEmails.length = 0;
-                   continue; 
-               }
-               break;
-           }
+            let account = await getBestAccount(useCliPool ? "cli" : "sandbox", openaiBody.model, clientId, triedEmails, true);
+            
+            if (!account && !isSandboxOnlyModel && !isCliOnlyModel) {
+                console.log(`[Manager] No READY accounts in ${useCliPool ? 'CLI' : 'Sandbox'} pool, trying the other pool first...`);
+                const otherPool = useCliPool ? "sandbox" : "cli";
+                account = await getBestAccount(otherPool, openaiBody.model, clientId, triedEmails, true);
+                if (account) {
+                    useCliPool = !useCliPool;
+                    console.log(`[Switch] Found ready account in ${useCliPool ? 'CLI' : 'Sandbox'} pool.`);
+                }
+            }
 
-           triedEmails.push(account.email);
+            if (!account) {
+                account = await getBestAccount(useCliPool ? "cli" : "sandbox", openaiBody.model, clientId, triedEmails, false);
+            }
+            
+            if (!account || !account.accessToken) {
+                if (attempts < MAX_ATTEMPTS) {
+                    console.log(`[Switch] Exhausted all accounts in both pools, retrying...`);
+                    triedEmails.length = 0;
+                    continue; 
+                }
+                break;
+            }
 
-          const SANDBOX_ENDPOINTS = Array.isArray(config.endpoints.sandbox) ? config.endpoints.sandbox : [config.endpoints.sandbox];
-          const CLI_ENDPOINTS = Array.isArray(config.endpoints.cli) ? config.endpoints.cli : [config.endpoints.cli];
-          
-          let GOOGLE_URL: string;
-          if (useCliPool) {
-              const cliEndpointIndex = isClaudeModel ? CLI_ENDPOINTS.length - 1 : Math.min(attempts - 1, CLI_ENDPOINTS.length - 1);
-              GOOGLE_URL = CLI_ENDPOINTS[cliEndpointIndex];
-          } else {
-              const sandboxEndpointIndex = Math.min(attempts - 1, SANDBOX_ENDPOINTS.length - 1);
-              GOOGLE_URL = SANDBOX_ENDPOINTS[sandboxEndpointIndex];
-          }
+            const SANDBOX_ENDPOINTS = Array.isArray(config.endpoints.sandbox) ? config.endpoints.sandbox : [config.endpoints.sandbox];
+            const CLI_ENDPOINTS = Array.isArray(config.endpoints.cli) ? config.endpoints.cli : [config.endpoints.cli];
+            
+            let GOOGLE_URL: string;
+            if (useCliPool) {
+                const cliEndpointIndex = isClaudeModel ? CLI_ENDPOINTS.length - 1 : Math.min(attempts - 1, CLI_ENDPOINTS.length - 1);
+                GOOGLE_URL = CLI_ENDPOINTS[cliEndpointIndex];
+            } else {
+                const sandboxEndpointIndex = Math.min(attempts - 1, SANDBOX_ENDPOINTS.length - 1);
+                GOOGLE_URL = SANDBOX_ENDPOINTS[sandboxEndpointIndex];
+            }
+
+            if (lastStatus === 503) {
+                console.log(`[Capacity] Retrying account ${account.email} on next endpoint ${GOOGLE_URL.split('/')[2]}...`);
+            } else {
+                triedEmails.push(account.email);
+            }
+
 
           if (isClaudeModel && !GOOGLE_URL.includes("v1internal")) {
               console.warn(`[Warning] Claude model ${openaiBody.model} is being routed to a non-v1internal endpoint: ${GOOGLE_URL}`);
@@ -227,9 +235,12 @@ Bun.serve({
             if (!googleRes.ok) {
                const errText = await googleRes.text();
                const parsedError = parseGoogleError(errText);
-               const status = googleRes.status;
-               
-               console.error(`[Error] Google API (${account.email}) returned ${status} (${parsedError.reason}):`, errText);
+                const status = googleRes.status;
+                lastStatus = status;
+                lastGoogleUrl = GOOGLE_URL;
+                
+                console.error(`[Error] Google API (${account.email}) returned ${status} (${parsedError.reason}):`, errText);
+
                emitAccountFlash(account.email, 'error');
                attemptLogs.push({ email: account.email, status, reason: parsedError.reason });
 
@@ -278,14 +289,16 @@ Bun.serve({
                    }
                } catch (e) {}
 
-               if (status === 429 && resetSeconds > 0 && resetSeconds <= config.retry.transientRetryThresholdSeconds) {
-                   console.log(`[Skip] Account ${account.email} transiently limited (${resetSeconds}s), rotating...`);
-                   account.consecutiveFailures = (account.consecutiveFailures || 0) + 1;
-                   if (account.consecutiveFailures >= 2) {
-                       await updateAccountUsage(account.email, false, openaiBody.model, useCliPool ? "cli" : "sandbox", clientId, 429);
-                   }
-                   continue;
-               }
+                if (status === 429 && resetSeconds > 0 && resetSeconds <= config.retry.transientRetryThresholdSeconds) {
+                    console.log(`[Skip] Account ${account.email} transiently limited (${resetSeconds}s), rotating...`);
+                    account.consecutiveFailures = (account.consecutiveFailures || 0) + 1;
+                    if (account.consecutiveFailures >= 2) {
+                        await updateAccountUsage(account.email, false, openaiBody.model, useCliPool ? "cli" : "sandbox", clientId, 429);
+                    }
+                    triedEmails.push(account.email);
+                    continue;
+                }
+
 
                if (status === 400 && (errText.toLowerCase().includes("tool schema") || errText.includes("Invalid JSON payload") || errText.toLowerCase().includes("function_declarations")) && !aggressive) {
                   console.log(`[Schema] Detected tool schema error for ${account.email}, retrying with aggressive cleaning...`);

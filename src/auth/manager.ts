@@ -141,6 +141,10 @@ export async function getBestAccount(pool?: 'cli' | 'sandbox', model?: string, c
 
     if (candidates.length === 0 && !skipRescue) {
       candidates = usable.filter(a => !(model && a.capabilities?.[model] === false))
+        .filter(a => {
+          const expiry = cooldownMap.get(`${a.email}|${pool}|${family}`);
+          return !expiry || expiry <= now + 300000;
+        })
         .sort((a, b) => {
           const expA = cooldownMap.get(`${a.email}|${pool}|${family}`) || 0;
           const expB = cooldownMap.get(`${b.email}|${pool}|${family}`) || 0;
