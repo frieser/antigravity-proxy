@@ -59,18 +59,19 @@ const DEFAULT_CONFIG: ProxyConfig = {
     refreshIntervalMs: 300000,
     initialDelayMs: 10000
   },
-  endpoints: {
-    sandbox: [
-      'https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse',
-      'https://autopush-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse',
-      'https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse'
-    ],
-    cli: [
-      'https://daily-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse',
-      'https://autopush-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse',
-      'https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse'
-    ]
-  },
+    endpoints: {
+      sandbox: [
+        'https://daily-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse',
+        'https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse',
+        'https://daily-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse',
+        'https://autopush-cloudcode-pa.sandbox.googleapis.com/v1internal:streamGenerateContent?alt=sse'
+      ],
+      cli: [
+        'https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse',
+        'https://daily-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse',
+        'https://autopush-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse'
+      ]
+    },
   logging: {
     maxBufferSize: 200,
     enableConsoleCapture: true

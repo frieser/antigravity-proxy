@@ -128,9 +128,9 @@ Bun.serve({
        const attemptLogs: Array<{ email: string, status: number, reason: string }> = [];
        let systemicErrorCount = 0;
       
-      // GPT and Claude models are Sandbox-only. Explicit antigravity- models are also Sandbox-only.
+      // GPT and Claude models are Sandbox-preferred. Explicit antigravity- models are also Sandbox-only.
       const isExplicitAntigravity = modelLower.includes("antigravity-");
-      const isSandboxOnlyModel = modelLower.includes("gpt") || isClaudeModel || isExplicitAntigravity;
+      const isSandboxOnlyModel = modelLower.includes("gpt") || isExplicitAntigravity;
       const isCliOnlyModel = false;
       const CLAUDE_REGIONS = ["us-central1", "us-east5", "europe-west1"];
       
