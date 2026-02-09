@@ -175,10 +175,10 @@ export function transformToGoogleBody(
         if (thoughtText) {
           const sig = getSignature(sessionId, thoughtText);
           if (sig) {
-            parts.push({ thought: true, type: "thinking", text: thoughtText, thoughtSignature: sig });
+            parts.push({ thought: true, text: thoughtText, thoughtSignature: sig });
           } else if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
              // Claude Sandbox/CLI needs signature or sentinel
-             parts.push({ thought: true, type: "thinking", text: thoughtText, thoughtSignature: SKIP_THOUGHT_SIGNATURE });
+             parts.push({ thought: true, text: thoughtText, thoughtSignature: SKIP_THOUGHT_SIGNATURE });
           } else {
             console.warn(`[Transform] Signature cache miss for thought in session ${sessionId}. Stripping block.`);
           }
@@ -313,9 +313,7 @@ You are pair programming with a USER to solve their coding task. The task may re
         };
     } else {
         googleRequest.generationConfig.thinkingConfig = {
-          includeThoughts: true,
           include_thoughts: true,
-          thinkingBudget: thinkingBudget || 16000,
           thinking_budget: thinkingBudget || 16000
         };
     }
