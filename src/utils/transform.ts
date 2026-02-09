@@ -1,6 +1,7 @@
 import { getSignature, cacheSignature } from "./cache";
 import { cleanJSONSchemaForAntigravity } from "./schema";
 
+const SKIP_THOUGHT_SIGNATURE = "c2tpcF90aG91Z2h0X3NpZ25hdHVyZV92YWxpZGF0b3I=";
 const CLAUDE_MODEL_REGISTRY = [
     "claude-3-7-sonnet-20250219",
     "claude-3-5-sonnet-20241022",
@@ -174,10 +175,10 @@ export function transformToGoogleBody(
         if (thoughtText) {
           const sig = getSignature(sessionId, thoughtText);
           if (sig) {
-            parts.push({ thought: true, text: thoughtText, thoughtSignature: sig });
-          } else if (googleModel.includes("claude")) {
+            parts.push({ thought: true, type: "thinking", text: thoughtText, thoughtSignature: sig });
+          } else if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
              // Claude Sandbox/CLI needs signature or sentinel
-             parts.push({ thought: true, text: thoughtText, thoughtSignature: "skip_thought_signature_validator" });
+             parts.push({ thought: true, type: "thinking", text: thoughtText, thoughtSignature: SKIP_THOUGHT_SIGNATURE });
           } else {
             console.warn(`[Transform] Signature cache miss for thought in session ${sessionId}. Stripping block.`);
           }
@@ -231,8 +232,8 @@ export function transformToGoogleBody(
             
             if (sig) {
               funcPart.thoughtSignature = sig;
-            } else if (googleModel.includes("claude")) {
-              funcPart.thoughtSignature = "skip_thought_signature_validator";
+            } else if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
+              funcPart.thoughtSignature = SKIP_THOUGHT_SIGNATURE;
             }
 
             parts.push(funcPart);
@@ -312,7 +313,9 @@ You are pair programming with a USER to solve their coding task. The task may re
         };
     } else {
         googleRequest.generationConfig.thinkingConfig = {
+          includeThoughts: true,
           include_thoughts: true,
+          thinkingBudget: thinkingBudget || 16000,
           thinking_budget: thinkingBudget || 16000
         };
     }
@@ -395,7 +398,7 @@ export function transformGoogleEventToOpenAI(googleData: any, model: string, req
   let extractedThought: string | undefined;
 
   for (const part of parts) {
-    const isThought = part.thought || part.thoughtText;
+    const isThought = part.thought || part.thoughtText || part.type === "thinking";
     
     if (part.text) {
       let cleanText = part.text;
