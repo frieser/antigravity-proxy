@@ -370,8 +370,8 @@ function renderFamilyGrid(stats) {
             .join(', ');
 
         return `
-        <div class="bg-white dark:bg-[#0f0f0f] rounded border ${borderColor} overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors">
-            <div class="p-4 cursor-pointer" onclick="toggleAllFamilies()">
+        <div class="bg-white dark:bg-[#0f0f0f] rounded border ${borderColor} overflow-hidden group hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors flex flex-col h-full">
+            <div class="p-4 cursor-pointer flex-grow flex flex-col" onclick="toggleAllFamilies()">
                 <div class="flex items-start justify-between mb-4">
                     <div>
                         <div class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">${stat.name}</div>
@@ -382,7 +382,7 @@ function renderFamilyGrid(stats) {
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center justify-between gap-4 mt-auto">
                      <div class="text-[10px] text-zinc-500 dark:text-zinc-600 leading-tight" title="${modelsInFamily}">${modelsInFamily}</div>
                      <div class="flex flex-col items-end shrink-0" title="Time until next quota refill">
                         <span class="text-[8px] text-zinc-500 dark:text-zinc-700 uppercase tracking-tighter">Quota increase in</span>
