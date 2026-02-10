@@ -23,12 +23,12 @@ This project is strongly inspired by [opencode-antigravity-auth](https://github.
 ### Bunx (Recommended)
 You can run the proxy instantly using `bunx`:
 ```bash
-bunx antigravity-proxy@0.2.3
+bunx antigravity-proxy@0.2.4
 ```
 
 ### Docker Hub
 ```bash
-docker run -d -p 3000:3000 -e BASE_URL=http://localhost:3000 --name antigravity-proxy frieserpaldi/antigravity-proxy:0.2.3
+docker run -d -p 3000:3000 -e BASE_URL=http://localhost:3000 --name antigravity-proxy frieserpaldi/antigravity-proxy:0.2.4
 ```
 
 ### Local Execution (Bun)

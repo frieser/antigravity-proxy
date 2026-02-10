@@ -675,7 +675,7 @@ Bun.serve({
     if (url.pathname.startsWith("/frontend/")) {
         const path = url.pathname.replace("/frontend/", "");
         try {
-            const file = Bun.file(`src/frontend/${path}`);
+            const file = Bun.file(`${import.meta.dir}/frontend/${path}`);
             return new Response(file);
         } catch {
             return new Response("Not Found", { status: 404 });
