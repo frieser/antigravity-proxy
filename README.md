@@ -2,7 +2,7 @@
 
 ![Antigravity Proxy Dashboard](screenshots/screenshot.png)
 
-Antigravity Proxy is a high-performance gateway that exposes Google's internal Gemini and Claude APIs through an **OpenAI-compatible interface**. It enables seamless integration between advanced models (like Claude 4.5 Opus, Gemini 3, and GPT-equivalent models) and CLI agents (such as **OpenCode** or **Claude Code**), as well as any application supporting the OpenAI API standard.
+Antigravity Proxy is a high-performance gateway that exposes Google's internal Gemini and Claude APIs through an **OpenAI-compatible interface**. It enables seamless integration between advanced models (like Claude 4.6 Opus, Gemini 3, and GPT-equivalent models) and CLI agents (such as **OpenCode** or **Claude Code**), as well as any application supporting the OpenAI API standard.
 
 This project is strongly inspired by [opencode-antigravity-auth](https://github.com/NoeFabris/opencode-antigravity-auth).
 
@@ -103,18 +103,6 @@ Add the following provider to your `~/.config/opencode/opencode.json` under the 
             "antigravity-claude-opus-4-6-thinking-high": {
                 "name": "Claude Opus 4.6 Think High (Antigravity)",
                 "limit": { "context": 1000000, "output": 64000 }
-            },
-            "antigravity-claude-opus-4-5-thinking-low": {
-                "name": "Claude Opus 4.5 Think Low (Antigravity)",
-                "limit": { "context": 200000, "output": 64000 }
-            },
-            "antigravity-claude-opus-4-5-thinking-medium": {
-                "name": "Claude Opus 4.5 Think Medium (Antigravity)",
-                "limit": { "context": 200000, "output": 64000 }
-            },
-            "antigravity-claude-opus-4-5-thinking-high": {
-                "name": "Claude Opus 4.5 Think High (Antigravity)",
-                "limit": { "context": 200000, "output": 64000 }
             },
             "gemini-2.5-flash": {
                 "name": "Gemini 2.5 Flash (CLI)",

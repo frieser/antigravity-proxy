@@ -1,6 +1,6 @@
 
 async function testClaude() {
-  const modelName = "antigravity-claude-opus-4-5-thinking-high";
+  const modelName = "antigravity-claude-opus-4-6-thinking-high";
   const email = "frieserpaldi@gmail.com";
   
   console.log(`\n🚀 Testing ${modelName} with forced account: ${email}`);

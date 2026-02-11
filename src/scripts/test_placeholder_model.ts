@@ -29,10 +29,10 @@ if (!account) {
     process.exit(1);
 }
 
-console.log(`\n=== TESTING antigravity-claude-opus-4-5-thinking-high FOR: ${account.email} ===`);
+console.log(`\n=== TESTING antigravity-claude-opus-4-6-thinking-high FOR: ${account.email} ===`);
 
 const openaiBody = {
-    model: "claude-opus-4-5-thinking", 
+    model: "claude-opus-4-6-thinking", 
     messages: [
         { role: "user", content: "Hi" }
     ],
@@ -45,7 +45,7 @@ const effectiveProjectId = account.projectId || "rising-fact-p41fc";
 const googleBody = transformToGoogleBody(openaiBody, effectiveProjectId, false, "us-central1"); // requestType=agent
 
 // OVERRIDE MODEL NAME with what the plugin uses
-googleBody.model = "antigravity-claude-opus-4-5-thinking-high"; 
+googleBody.model = "antigravity-claude-opus-4-6-thinking-high"; 
 console.log("Modified Body Model:", googleBody.model);
 
 // URL

@@ -24,7 +24,7 @@ if (!account) {
 console.log(`Testing Claude on CLI endpoint with account: ${account.email}`);
 
 const openaiBody = {
-    model: "claude-opus-4-5-thinking",
+    model: "claude-opus-4-6-thinking",
     messages: [
         { role: "user", content: "Hello, explain quantum physics in one sentence." }
     ],

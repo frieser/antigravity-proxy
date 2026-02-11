@@ -14,7 +14,7 @@ const testCases = [
     {
         name: "Claude Opus Thinking (CLI)",
         input: {
-            model: "antigravity-claude-opus-4-5-thinking-high",
+            model: "antigravity-claude-opus-4-6-thinking-high",
             messages: [{ role: "user", content: "Hi" }]
         },
         projectId: "test-project",

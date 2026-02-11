@@ -1,7 +1,6 @@
 import { getSignature, cacheSignature } from "./cache";
 import { cleanJSONSchemaForAntigravity } from "./schema";
 
-const SKIP_THOUGHT_SIGNATURE = "c2tpcF90aG91Z2h0X3NpZ25hdHVyZV92YWxpZGF0b3I=";
 const CLAUDE_MODEL_REGISTRY = [
     "claude-3-7-sonnet-20250219",
     "claude-3-5-sonnet-20241022",
@@ -70,7 +69,6 @@ export function transformToGoogleBody(
         if (googleModel.includes("claude")) {
             googleModel = baseModel;
             if (googleModel === "claude-opus-4-6") googleModel = "claude-opus-4-6-thinking";
-            if (googleModel === "claude-opus-4-5") googleModel = "claude-opus-4-5-thinking";
             if (googleModel === "claude-sonnet-4-5") googleModel = "claude-sonnet-4-5-thinking";
         }
 
@@ -78,7 +76,6 @@ export function transformToGoogleBody(
       "claude-sonnet-4-5", 
       "claude-sonnet-4-5-thinking", 
       "claude-opus-4-6-thinking",
-      "claude-opus-4-5-thinking", 
       "gemini-3-flash",
       "gemini-3-pro-high", 
       "gemini-3-pro-low",
@@ -110,37 +107,33 @@ export function transformToGoogleBody(
           } else {
                googleModel = baseModel;
           }
-      } else {
-          googleModel = baseModel;
-          if (googleModel === "claude-opus-4-5") googleModel = "claude-opus-4-5-thinking";
-          if (googleModel === "claude-sonnet-4-5") googleModel = "claude-sonnet-4-5-thinking";
-      }
-  } else {
-      if (googleModel.endsWith("-preview")) {
-          googleModel = googleModel.replace("-preview", "");
-      }
-      
-      if (isNative) {
-          if (baseModel.includes("gemini-3-pro")) {
-              // Respect extracted tier for Gemini 3 Pro, fallback to high
-              googleModel = `gemini-3-pro-${extractedTier || "high"}`;
-          } else if (baseModel.includes("gemini-3-flash")) {
-              googleModel = "gemini-3-flash";
-          } else {
-              googleModel = baseModel;
-          }
+       } else {
+           googleModel = baseModel;
+           if (googleModel === "claude-sonnet-4-5") googleModel = "claude-sonnet-4-5-thinking";
+       }
+   } else {
+       if (googleModel.endsWith("-preview")) {
+           googleModel = googleModel.replace("-preview", "");
+       }
+       
+       if (isNative) {
+           if (baseModel.includes("gemini-3-pro")) {
+               // Respect extracted tier for Gemini 3 Pro, fallback to high
+               googleModel = `gemini-3-pro-${extractedTier || "high"}`;
+           } else if (baseModel.includes("gemini-3-flash")) {
+               googleModel = "gemini-3-flash";
+           } else {
+               googleModel = baseModel;
+           }
 
-            if (googleModel === "claude-opus-4-6" || googleModel === "antigravity-claude-opus-4-6") {
-                googleModel = "claude-opus-4-6-thinking";
-            }
-            if (googleModel === "claude-opus-4-5" || googleModel === "antigravity-claude-opus-4-5") {
-                googleModel = "claude-opus-4-5-thinking";
-            }
-          if (googleModel === "claude-sonnet-4-5" || googleModel === "antigravity-claude-sonnet-4-5") {
-              googleModel = "claude-sonnet-4-5-thinking";
-          }
-      }
-  }
+             if (googleModel === "claude-opus-4-6" || googleModel === "antigravity-claude-opus-4-6") {
+                 googleModel = "claude-opus-4-6-thinking";
+             }
+           if (googleModel === "claude-sonnet-4-5" || googleModel === "antigravity-claude-sonnet-4-5") {
+               googleModel = "claude-sonnet-4-5-thinking";
+           }
+       }
+   }
 
   // Extract system instruction (like plugin)
   const systemMessage = openaiBody.messages.find((m: any) => m.role === "system");
@@ -161,11 +154,17 @@ export function transformToGoogleBody(
         responseObj = { result: responseObj };
       }
 
+      const funcResp: any = {
+        name: msg.name || "function_result",
+        response: responseObj
+      };
+      
+      if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
+          funcResp.id = msg.tool_call_id;
+      }
+
       parts.push({
-        functionResponse: {
-          name: msg.name || "function_result",
-          response: responseObj
-        }
+        functionResponse: funcResp
       });
     } else {
       // Re-inject thinking signatures for multi-turn assistant messages
@@ -175,11 +174,8 @@ export function transformToGoogleBody(
           const sig = getSignature(sessionId, thoughtText);
           if (sig) {
             parts.push({ thought: true, text: thoughtText, thoughtSignature: sig });
-          } else if (googleModel.includes("claude")) {
-             // Claude Sandbox/CLI needs signature or sentinel
-             parts.push({ thought: true, text: thoughtText, thoughtSignature: SKIP_THOUGHT_SIGNATURE });
           } else {
-            console.warn(`[Transform] Signature cache miss for thought in session ${sessionId}. Stripping block.`);
+            console.warn(`[Transform] Signature cache miss for thought in session ${sessionId}. Stripping block to avoid 400 error.`);
           }
         }
       }
@@ -221,17 +217,21 @@ export function transformToGoogleBody(
               }
             }
 
+            const funcCall: any = {
+              name: tc.function.name,
+              args: typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments || "{}") : tc.function.arguments
+            };
+            
+            if (googleModel.includes("claude") || googleModel.includes("gemini-3")) {
+                funcCall.id = tc.id;
+            }
+
             const funcPart: any = {
-              functionCall: {
-                name: tc.function.name,
-                args: typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments || "{}") : tc.function.arguments
-              }
+              functionCall: funcCall
             };
             
             if (sig) {
               funcPart.thoughtSignature = sig;
-            } else if (googleModel.includes("claude")) {
-              funcPart.thoughtSignature = SKIP_THOUGHT_SIGNATURE;
             }
 
             parts.push(funcPart);
@@ -421,9 +421,12 @@ export function transformGoogleEventToOpenAI(googleData: any, model: string, req
     if (part.functionCall || part.function_call) {
       const call = part.functionCall || part.function_call;
       const sig = part.thoughtSignature || part.thought_signature || extractedSignature || "";
+      const rawId = call.id || call.callId || call.call_id || "call_" + Math.random().toString(36).substring(7);
+      const callId = (sig && !rawId.startsWith("sig:")) ? `sig:${sig}:${rawId}` : rawId;
+      
       toolCalls.push({
         index: toolCalls.length,
-        id: (sig ? `sig:${sig}:` : "") + "call_" + Math.random().toString(36).substring(7),
+        id: callId,
         type: "function",
         function: {
           name: call.name,

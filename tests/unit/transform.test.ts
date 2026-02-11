@@ -97,8 +97,8 @@ describe("Unit Tests: transformToGoogleBody", () => {
 
     const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
     expect(result.model).toBe("claude-opus-4-6-thinking");
-    expect(result.request.generationConfig.thinkingConfig.include_thoughts).toBe(true);
-    expect(result.request.generationConfig.thinkingConfig.thinking_budget).toBe(32768);
+    expect(result.request.generationConfig.thinkingConfig.includeThoughts).toBe(true);
+    expect(result.request.generationConfig.thinkingConfig.thinkingBudget).toBe(32768);
   });
 
   test("Claude Opus 4.6 Thinking Low budget", () => {
@@ -108,7 +108,50 @@ describe("Unit Tests: transformToGoogleBody", () => {
     };
 
     const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
-    expect(result.request.generationConfig.thinkingConfig.thinking_budget).toBe(8192);
+    expect(result.request.generationConfig.thinkingConfig.thinkingBudget).toBe(8192);
+  });
+
+  test("Claude tool call transformation with ID", () => {
+    const openaiBody = {
+      model: "antigravity-claude-opus-4-6-thinking-high",
+      messages: [
+        {
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            {
+              id: "call_abc123",
+              type: "function",
+              function: { name: "test_tool", arguments: "{}" }
+            }
+          ]
+        }
+      ]
+    };
+
+    const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
+    const funcCallPart = result.request.contents[0].parts.find((p: any) => p.functionCall);
+    expect(funcCallPart).toBeDefined();
+    expect(funcCallPart.functionCall.id).toBe("call_abc123");
+  });
+
+  test("Claude tool response transformation with ID", () => {
+    const openaiBody = {
+      model: "antigravity-claude-opus-4-6-thinking-high",
+      messages: [
+        {
+          role: "tool",
+          tool_call_id: "call_abc123",
+          name: "test_tool",
+          content: '{"result": "ok"}'
+        }
+      ]
+    };
+
+    const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
+    const funcRespPart = result.request.contents[0].parts.find((p: any) => p.functionResponse);
+    expect(funcRespPart).toBeDefined();
+    expect(funcRespPart.functionResponse.id).toBe("call_abc123");
   });
 });
 

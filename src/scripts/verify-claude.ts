@@ -24,7 +24,7 @@ const baseBody = {
 const modelsToTest = [
     "gemini-2.5-pro",
     "claude-sonnet-4-5",
-    "claude-opus-4-5-thinking"
+    "claude-opus-4-6-thinking"
 ];
 
 for (const m of modelsToTest) {
