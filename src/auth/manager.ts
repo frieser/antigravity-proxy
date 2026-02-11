@@ -151,7 +151,11 @@ function isAccountQuotaExhausted(account: AntigravityAccount, model?: string): b
     return Math.max(worst, used);
   }, 0);
 
-  return usedPercent >= threshold;
+  if (usedPercent >= threshold) {
+    console.log(`[SoftQuota] Skipping ${account.email} for ${family || 'unknown'}: ${usedPercent.toFixed(1)}% used (threshold: ${threshold}%)`);
+    return true;
+  }
+  return false;
 }
 
 function getPidOffset(): number {

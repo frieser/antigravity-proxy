@@ -224,6 +224,11 @@ Bun.serve({
           const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
           try {
+            if (config.features.jitterEnabled) {
+              const jitterMs = config.features.jitterMinMs + Math.random() * (config.features.jitterMaxMs - config.features.jitterMinMs);
+              await new Promise(r => setTimeout(r, jitterMs));
+            }
+
             const googleRes = await fetch(GOOGLE_URL, {
               method: "POST",
               headers: headers,

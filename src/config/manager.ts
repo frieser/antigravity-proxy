@@ -82,7 +82,10 @@ const DEFAULT_CONFIG: ProxyConfig = {
     keepThinking: false,
     sanitizeToolNames: true,
     pidOffsetEnabled: false,
-    softQuotaThresholdPercent: 90
+    softQuotaThresholdPercent: 90,
+    jitterEnabled: true,
+    jitterMinMs: 50,
+    jitterMaxMs: 300
   },
   scheduling: {
     mode: 'cache_first',

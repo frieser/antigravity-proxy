@@ -88,17 +88,6 @@ function generateStableQuotaUser(email: string): string {
   return `device-${hash.substring(0, 16)}`;
 }
 
-function generateStableClientMetadata(): NonNullable<DeviceFingerprint["clientMetadata"]> {
-  return {
-    ideType: "VSCODE",
-    platform: "MACOS",
-    pluginType: "GEMINI",
-    osVersion: "14.5",
-    arch: "arm64",
-    sqmId: "5698064b-0196-4874-9a99-b148006e885c"
-  };
-}
-
 function generateQuotaUser(): string {
   const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);
@@ -106,11 +95,25 @@ function generateQuotaUser(): string {
 }
 
 export function generateFingerprint(email?: string): DeviceFingerprint {
-  const platform = "darwin/arm64";
-  const arch = "arm64";
-  const ideType = "VSCODE";
-  const platformName = "MACOS";
-  const apiClient = "google-cloud-sdk vscode/1.96.0";
+  const platform = randomFrom(PLATFORMS);
+  const arch = platform.includes("arm64") ? "arm64" : "x64";
+  const ideType = randomFrom(IDE_TYPES);
+  const apiClient = randomFrom(SDK_CLIENTS);
+
+  const platformMap: Record<string, string> = {
+    "darwin": "MACOS", "win32": "WINDOWS", "windows": "WINDOWS", "linux": "LINUX"
+  };
+  const osPrefix = platform.split("/")[0];
+  const platformName = platformMap[osPrefix] || "PLATFORM_UNSPECIFIED";
+
+  const osVersionMap: Record<string, string[]> = {
+    "MACOS": ["14.0", "14.2", "14.5", "15.0", "15.1"],
+    "WINDOWS": ["10.0.19045", "10.0.22621", "10.0.22631"],
+    "LINUX": ["6.1.0", "6.5.0", "6.8.0", "6.10.0"]
+  };
+  const osVersion = randomFrom(osVersionMap[platformName] || ["unknown"]);
+
+  const sqmId = crypto.randomUUID();
 
   return {
     userAgent: `antigravity/${ANTIGRAVITY_VERSION} ${platform}`,
@@ -123,7 +126,14 @@ export function generateFingerprint(email?: string): DeviceFingerprint {
     sessionToken: generateSessionToken(),
     cliUserAgent: randomFrom(GEMINI_CLI_USER_AGENTS),
     cliApiClient: randomFrom(GEMINI_CLI_API_CLIENTS),
-    clientMetadata: generateStableClientMetadata(),
+    clientMetadata: {
+      ideType: ideType,
+      platform: platformName,
+      pluginType: "GEMINI",
+      osVersion: osVersion,
+      arch: arch,
+      sqmId: sqmId
+    },
     createdAt: Date.now()
   };
 }
@@ -134,10 +144,12 @@ export function getImpersonationHeaders(accessToken: string, fingerprint?: Devic
     "Authorization": `Bearer ${accessToken}`,
     "Content-Type": "application/json",
     "User-Agent": `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Antigravity/${ANTIGRAVITY_VERSION} Chrome/138.0.7204.235 Electron/37.3.1 Safari/537.36`,
-    "X-Goog-Api-Client": "google-cloud-sdk vscode_cloudshelleditor/0.1",
+    "X-Goog-Api-Client": fp.apiClient,
     "X-Goog-QuotaUser": fp.quotaUser,
     "X-Client-Device-Id": fp.deviceId,
-    "Client-Metadata": '{"ideType":"IDE_UNSPECIFIED","platform":"PLATFORM_UNSPECIFIED","pluginType":"GEMINI"}'
+    "Client-Metadata": fp.clientMetadata
+      ? JSON.stringify({ ideType: fp.clientMetadata.ideType, platform: fp.clientMetadata.platform, pluginType: fp.clientMetadata.pluginType })
+      : '{"ideType":"IDE_UNSPECIFIED","platform":"PLATFORM_UNSPECIFIED","pluginType":"GEMINI"}'
   };
 
   if (model?.toLowerCase().includes("claude") || model?.toLowerCase().includes("anthropic")) {

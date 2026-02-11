@@ -87,6 +87,12 @@ export interface FeaturesConfig {
   pidOffsetEnabled: boolean;
   /** Soft quota threshold percentage (0-100). Skip account when quota usage exceeds this. Set to 100 to disable. */
   softQuotaThresholdPercent: number;
+  /** Enable request timing jitter to reduce detection patterns */
+  jitterEnabled: boolean;
+  /** Minimum jitter delay in milliseconds */
+  jitterMinMs: number;
+  /** Maximum jitter delay in milliseconds */
+  jitterMaxMs: number;
 }
 
 export interface SchedulingConfig {

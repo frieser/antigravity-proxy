@@ -282,9 +282,22 @@ export function transformToGoogleBody(
   });
 
   const isThinkingModel = rawModel.includes("-thinking");
-  const hasExplicitBudget = openaiBody.thinking_budget !== undefined;
+  const hasExplicitBudget = openaiBody.thinking_budget !== undefined || 
+                           openaiBody.thinking?.budget_tokens !== undefined ||
+                           openaiBody.providerOptions?.thinkingBudget !== undefined;
   
   let thinkingBudget = openaiBody.thinking_budget;
+
+  // Support OpenAI-standard `thinking` parameter: { type: "enabled", budget_tokens: N }
+  if (!thinkingBudget && openaiBody.thinking?.budget_tokens) {
+    thinkingBudget = openaiBody.thinking.budget_tokens;
+  }
+
+  // Support providerOptions from OpenCode variants: { providerOptions: { thinkingBudget: N } }
+  if (!thinkingBudget && openaiBody.providerOptions?.thinkingBudget) {
+    thinkingBudget = openaiBody.providerOptions.thinkingBudget;
+  }
+
   if (!thinkingBudget && isThinkingModel) {
       if (extractedTier === "low") thinkingBudget = 8192;
       else if (extractedTier === "medium") thinkingBudget = 16000;
