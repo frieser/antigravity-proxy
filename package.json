@@ -1,6 +1,6 @@
 {
   "name": "antigravity-proxy",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "module": "src/server.ts",
   "bin": {
     "antigravity-proxy": "./src/server.ts"
