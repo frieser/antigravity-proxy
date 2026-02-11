@@ -75,6 +75,19 @@ const DEFAULT_CONFIG: ProxyConfig = {
   logging: {
     maxBufferSize: 200,
     enableConsoleCapture: true
+  },
+  features: {
+    googleSearchGrounding: false,
+    groundingMode: 'auto',
+    keepThinking: false,
+    sanitizeToolNames: true,
+    pidOffsetEnabled: false,
+    softQuotaThresholdPercent: 90
+  },
+  scheduling: {
+    mode: 'cache_first',
+    maxCacheFirstWaitSeconds: 60,
+    maxRateLimitWaitSeconds: 300
   }
 };
 

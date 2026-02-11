@@ -2,6 +2,7 @@ import { type AntigravityAccount, type SelectionStrategy } from "./types";
 import { loadConfig, saveConfig } from "./storage";
 import { refreshAccessToken, getProjectId } from "./oauth";
 import { generateFingerprint } from "../utils/headers";
+import { getProxyConfig as getConfigFromManager } from "../config/manager";
 import { EventEmitter } from "events";
 
 let accounts: AntigravityAccount[] = [];
@@ -126,6 +127,40 @@ export function flagAccountChallenge(email: string, pool: 'cli' | 'sandbox', mod
   }
 }
 
+function isAccountQuotaExhausted(account: AntigravityAccount, model?: string): boolean {
+  let config: ReturnType<typeof getConfigFromManager>;
+  try { config = getConfigFromManager(); } catch { return false; }
+  const threshold = config.features.softQuotaThresholdPercent;
+  if (threshold >= 100 || !account.quota || account.quota.length === 0) return false;
+
+  const family = model ? getFamilyName(model) : null;
+  const relevantQuotas = family
+    ? account.quota.filter(q => {
+        const qLower = q.groupName.toLowerCase();
+        const fLower = family.toLowerCase();
+        return qLower.includes(fLower) || fLower.includes(qLower) ||
+               (fLower.includes('claude') && qLower.includes('claude')) ||
+               (fLower.includes('gemini') && qLower.includes('gemini'));
+      })
+    : account.quota;
+
+  if (relevantQuotas.length === 0) return false;
+
+  const usedPercent = relevantQuotas.reduce((worst, q) => {
+    const used = (1 - q.remainingFraction) * 100;
+    return Math.max(worst, used);
+  }, 0);
+
+  return usedPercent >= threshold;
+}
+
+function getPidOffset(): number {
+  let config: ReturnType<typeof getConfigFromManager>;
+  try { config = getConfigFromManager(); } catch { return 0; }
+  if (!config.features.pidOffsetEnabled) return 0;
+  return process.pid % Math.max(accounts.length, 1);
+}
+
 export async function getBestAccount(pool?: 'cli' | 'sandbox', model?: string, clientId?: string, excludeEmails: string[] = [], skipRescue: boolean = false): Promise<AntigravityAccount | null> {
   if (accounts.length === 0) return null;
   const now = Date.now();
@@ -135,9 +170,33 @@ export async function getBestAccount(pool?: 'cli' | 'sandbox', model?: string, c
   if (pool) {
     let candidates = usable.filter(a => {
       if (model && a.capabilities?.[model] === false) return false;
+      if (isAccountQuotaExhausted(a, model)) return false;
       const expiry = cooldownMap.get(`${a.email}|${pool}|${family}`);
       return !expiry || expiry <= now;
     });
+
+    let schedulingConfig: ReturnType<typeof getConfigFromManager>['scheduling'] | undefined;
+    try { schedulingConfig = getConfigFromManager().scheduling; } catch {}
+
+    if (candidates.length === 0 && schedulingConfig?.mode === 'cache_first' && clientId) {
+      const stickyEmail = clientStickyMap.get(clientId);
+      if (stickyEmail && !excludeEmails.includes(stickyEmail)) {
+        const stickyAccount = usable.find(a => a.email === stickyEmail);
+        if (stickyAccount) {
+          const expiry = cooldownMap.get(`${stickyEmail}|${pool}|${family}`);
+          if (expiry && expiry > now) {
+            const waitMs = expiry - now;
+            const maxWaitMs = (schedulingConfig.maxCacheFirstWaitSeconds || 60) * 1000;
+            if (waitMs <= maxWaitMs) {
+              console.log(`[CacheFirst] Waiting ${Math.ceil(waitMs / 1000)}s for ${stickyEmail} to preserve prompt cache...`);
+              await new Promise(r => setTimeout(r, waitMs));
+              return await ensureAccountReady(stickyAccount);
+            }
+            console.log(`[CacheFirst] ${stickyEmail} cooldown (${Math.ceil(waitMs / 1000)}s) exceeds max wait (${schedulingConfig.maxCacheFirstWaitSeconds}s), switching account.`);
+          }
+        }
+      }
+    }
 
     if (candidates.length === 0 && !skipRescue) {
       candidates = usable.filter(a => !(model && a.capabilities?.[model] === false))
@@ -169,8 +228,11 @@ export async function getBestAccount(pool?: 'cli' | 'sandbox', model?: string, c
         }
         return priorityB - priorityA;
     });
+
+    const offset = getPidOffset();
+    const selectedIndex = offset % candidates.length;
     
-    return await ensureAccountReady(candidates[0]);
+    return await ensureAccountReady(candidates[selectedIndex]);
   }
   return null;
 }

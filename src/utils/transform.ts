@@ -1,5 +1,36 @@
 import { getSignature, cacheSignature } from "./cache";
 import { cleanJSONSchemaForAntigravity } from "./schema";
+import { getProxyConfig } from "../config/manager";
+
+const TOOL_NAME_REMAP_CACHE = new Map<string, string>();
+
+function sanitizeFunctionName(name: string): string {
+  if (/^[a-zA-Z_]/.test(name) && /^[a-zA-Z0-9_]+$/.test(name)) {
+    return name;
+  }
+
+  const cached = TOOL_NAME_REMAP_CACHE.get(name);
+  if (cached) return cached;
+
+  let sanitized = name.replace(/[^a-zA-Z0-9_]/g, '_');
+  if (/^[0-9]/.test(sanitized)) {
+    sanitized = `fn_${sanitized}`;
+  }
+  if (!sanitized) {
+    sanitized = `fn_${Math.random().toString(36).substring(7)}`;
+  }
+
+  TOOL_NAME_REMAP_CACHE.set(name, sanitized);
+  console.log(`[Sanitize] Renamed tool "${name}" → "${sanitized}"`);
+  return sanitized;
+}
+
+export function getOriginalToolName(sanitizedName: string): string | undefined {
+  for (const [original, sanitized] of TOOL_NAME_REMAP_CACHE) {
+    if (sanitized === sanitizedName) return original;
+  }
+  return undefined;
+}
 
 const CLAUDE_MODEL_REGISTRY = [
     "claude-3-7-sonnet-20250219",
@@ -45,6 +76,7 @@ export function transformToGoogleBody(
   sessionId?: string, 
   aggressive: boolean = false
 ): any {
+  const proxyConfig = getProxyConfig();
   const rawModel = (openaiBody.model || "").toLowerCase();
   const resolvedModel = resolveModelId(openaiBody.model);
   let googleModel = resolvedModel;
@@ -167,15 +199,14 @@ export function transformToGoogleBody(
         functionResponse: funcResp
       });
     } else {
-      // Re-inject thinking signatures for multi-turn assistant messages
       if ((msg.role === "assistant" || msg.role === "model") && sessionId) {
         const thoughtText = msg.thought || msg.reasoning_content;
         if (thoughtText) {
           const sig = getSignature(sessionId, thoughtText);
           if (sig) {
             parts.push({ thought: true, text: thoughtText, thoughtSignature: sig });
-          } else {
-            console.warn(`[Transform] Signature cache miss for thought in session ${sessionId}. Stripping block to avoid 400 error.`);
+          } else if (proxyConfig.features.keepThinking) {
+            parts.push({ thought: true, text: thoughtText });
           }
         }
       }
@@ -315,10 +346,16 @@ You are pair programming with a USER to solve their coding task. The task may re
   }
 
   if (openaiBody.tools) {
+    const sanitize = proxyConfig.features.sanitizeToolNames;
     googleRequest.tools = [{
       functionDeclarations: openaiBody.tools.map((t: any) => {
         const cleanParams = cleanJSONSchemaForAntigravity(t.function.parameters || { type: "object", properties: {} }, aggressive);
         
+        let funcName = t.function.name;
+        if (sanitize) {
+          funcName = sanitizeFunctionName(funcName);
+        }
+
         let description = t.function.description || "";
         const paramNames = Object.keys(cleanParams.properties || {}).filter(k => k !== "_placeholder");
         if (paramNames.length > 0) {
@@ -326,7 +363,7 @@ You are pair programming with a USER to solve their coding task. The task may re
         }
 
         return {
-          name: t.function.name,
+          name: funcName,
           description: description,
           parameters: cleanParams
         };
@@ -340,10 +377,20 @@ You are pair programming with a USER to solve their coding task. The task may re
     }
   }
 
-  // Task 4: Remove region prefix for Claude models (not supported by Sandbox API)
-  // if (location && location !== "us-central1" && googleModel.includes("claude")) {
-  //     googleModel = `${location}/${googleModel}`;
-  // }
+  const isGeminiModel = googleModel.includes("gemini");
+  if (isGeminiModel && proxyConfig.features.googleSearchGrounding) {
+    const groundingTool: any = { googleSearchRetrieval: {} };
+    if (proxyConfig.features.groundingMode === 'always') {
+      groundingTool.googleSearchRetrieval.dynamicRetrievalConfig = {
+        mode: "MODE_UNSPECIFIED",
+        dynamicThreshold: 0.0
+      };
+    }
+    if (!googleRequest.tools) {
+      googleRequest.tools = [];
+    }
+    googleRequest.tools.push(groundingTool);
+  }
 
   return {
     project: projectId,
@@ -424,12 +471,14 @@ export function transformGoogleEventToOpenAI(googleData: any, model: string, req
       const rawId = call.id || call.callId || call.call_id || "call_" + Math.random().toString(36).substring(7);
       const callId = (sig && !rawId.startsWith("sig:")) ? `sig:${sig}:${rawId}` : rawId;
       
+      const funcName = getOriginalToolName(call.name) || call.name;
+      
       toolCalls.push({
         index: toolCalls.length,
         id: callId,
         type: "function",
         function: {
-          name: call.name,
+          name: funcName,
           arguments: typeof call.args === 'string' ? call.args : JSON.stringify(call.args || {})
         }
       });

@@ -6,7 +6,7 @@ await loadProxyConfig();
 import { initManager, getBestAccount, updateAccountUsage, addAccount, getAccounts, removeAccount, getStrategy, setStrategy, saveAccounts, emitAccountFlash, eventBus, getEarliestReset, markCooldown, ensureFingerprint, regenerateFingerprint, getCooldowns, resetAccount, flagAccountChallenge, flagModelUnsupported, updateAccountProject, getFamilyName, resetAllCooldowns } from "./auth/manager";
 import { type SelectionStrategy, type AntigravityAccount } from "./auth/types";
 import { generateAuthUrl, exchangeCode, getUserEmail, getProjectId } from "./auth/oauth";
-import { transformToGoogleBody, transformGoogleEventToOpenAI, createOpenAIStreamTransformer } from "./utils/transform";
+import { transformToGoogleBody, transformGoogleEventToOpenAI, createOpenAIStreamTransformer, getOriginalToolName } from "./utils/transform";
 import { getImpersonationHeaders, getGeminiCliHeaders, generateFingerprint } from "./utils/headers";
 import { refreshAllQuotas, fetchQuota, supportedModelsCache } from "./api/quota";
 import { parseGoogleError } from "./utils/errors";
