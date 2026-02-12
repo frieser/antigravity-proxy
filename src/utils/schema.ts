@@ -24,6 +24,12 @@ const UNSUPPORTED_SCHEMA_FIELDS = new Set([
 ]);
 
 export function cleanJSONSchemaForAntigravity(schema: any, aggressive: boolean = false): any {
+  if (schema === true) {
+    return { type: "STRING" };
+  }
+  if (schema === false) {
+    return { type: "NULL" };
+  }
   if (!schema || typeof schema !== "object" || Array.isArray(schema)) {
     return schema;
   }
