@@ -12,10 +12,7 @@ export const OAUTH_CONFIG = {
     "https://www.googleapis.com/auth/cclog",
     "https://www.googleapis.com/auth/experimentsandconfigs"
   ],
-  redirectUri: (() => {
-    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
-    return `${baseUrl}/oauth-callback`;
-  })()
+  redirectUri: "http://localhost:3000/oauth-callback"
 };
 
 const ANTIGRAVITY_VERSION = "1.15.8";

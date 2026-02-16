@@ -670,8 +670,7 @@ Bun.serve({
 
           await addAccount(newAccount);
           
-          const baseUrl = process.env.BASE_URL || "http://127.0.0.1:3000";
-          return Response.redirect(`${baseUrl}/frontend/index.html`);
+          return Response.redirect(`http://localhost:3000/frontend/index.html`);
       } catch (e) {
           return new Response(`Auth error: ${e}`, { status: 500 });
       }
