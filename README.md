@@ -64,6 +64,14 @@ Add the following provider to your `~/.config/opencode/opencode.json` under the 
             "baseURL": "http://localhost:3000/v1"
         },
         "models": {
+            "antigravity-gemini-3.1-pro-low": {
+                "name": "Gemini 3.1 Pro Low (Antigravity)",
+                "limit": { "context": 1048576, "output": 65535 }
+            },
+            "antigravity-gemini-3.1-pro-high": {
+                "name": "Gemini 3.1 Pro High (Antigravity)",
+                "limit": { "context": 1048576, "output": 65535 }
+            },
             "antigravity-gemini-3-pro-low": {
                 "name": "Gemini 3 Pro Low (Antigravity)",
                 "limit": { "context": 1048576, "output": 65535 }
@@ -75,6 +83,22 @@ Add the following provider to your `~/.config/opencode/opencode.json` under the 
             "antigravity-gemini-3-flash": {
                 "name": "Gemini 3 Flash (Antigravity)",
                 "limit": { "context": 1048576, "output": 65536 }
+            },
+            "antigravity-claude-sonnet-4-6": {
+                "name": "Claude Sonnet 4.6 (Antigravity)",
+                "limit": { "context": 200000, "output": 64000 }
+            },
+            "antigravity-claude-sonnet-4-6-thinking-low": {
+                "name": "Claude Sonnet 4.6 Think Low (Antigravity)",
+                "limit": { "context": 200000, "output": 64000 }
+            },
+            "antigravity-claude-sonnet-4-6-thinking-medium": {
+                "name": "Claude Sonnet 4.6 Think Medium (Antigravity)",
+                "limit": { "context": 200000, "output": 64000 }
+            },
+            "antigravity-claude-sonnet-4-6-thinking-high": {
+                "name": "Claude Sonnet 4.6 Think High (Antigravity)",
+                "limit": { "context": 200000, "output": 64000 }
             },
             "antigravity-claude-sonnet-4-5": {
                 "name": "Claude Sonnet 4.5 (Antigravity)",

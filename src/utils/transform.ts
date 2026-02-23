@@ -101,13 +101,20 @@ export function transformToGoogleBody(
         if (googleModel.includes("claude")) {
             googleModel = baseModel;
             if (googleModel === "claude-opus-4-6") googleModel = "claude-opus-4-6-thinking";
+            if (googleModel === "claude-sonnet-4-6") googleModel = "claude-sonnet-4-6-thinking";
             if (googleModel === "claude-sonnet-4-5") googleModel = "claude-sonnet-4-5-thinking";
         }
 
     const nativelySupported = [
+      "claude-sonnet-4-6",
+      "claude-sonnet-4-6-thinking",
       "claude-sonnet-4-5", 
       "claude-sonnet-4-5-thinking", 
       "claude-opus-4-6-thinking",
+      "gemini-3.1-pro-high",
+      "gemini-3.1-pro-low",
+      "gemini-3.1-pro",
+      "gemini-3.1-pro-preview",
       "gemini-3-flash",
       "gemini-3-pro-high", 
       "gemini-3-pro-low",
@@ -141,6 +148,7 @@ export function transformToGoogleBody(
           }
        } else {
            googleModel = baseModel;
+           if (googleModel === "claude-sonnet-4-6") googleModel = "claude-sonnet-4-6-thinking";
            if (googleModel === "claude-sonnet-4-5") googleModel = "claude-sonnet-4-5-thinking";
        }
    } else {
@@ -149,7 +157,9 @@ export function transformToGoogleBody(
        }
        
        if (isNative) {
-           if (baseModel.includes("gemini-3-pro")) {
+           if (baseModel.includes("gemini-3.1-pro")) {
+               googleModel = `gemini-3.1-pro-${extractedTier || "high"}`;
+           } else if (baseModel.includes("gemini-3-pro")) {
                // Respect extracted tier for Gemini 3 Pro, fallback to high
                googleModel = `gemini-3-pro-${extractedTier || "high"}`;
            } else if (baseModel.includes("gemini-3-flash")) {
@@ -161,6 +171,9 @@ export function transformToGoogleBody(
              if (googleModel === "claude-opus-4-6" || googleModel === "antigravity-claude-opus-4-6") {
                  googleModel = "claude-opus-4-6-thinking";
              }
+           if (googleModel === "claude-sonnet-4-6" || googleModel === "antigravity-claude-sonnet-4-6") {
+               googleModel = "claude-sonnet-4-6-thinking";
+           }
            if (googleModel === "claude-sonnet-4-5" || googleModel === "antigravity-claude-sonnet-4-5") {
                googleModel = "claude-sonnet-4-5-thinking";
            }
