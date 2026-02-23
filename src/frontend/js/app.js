@@ -643,6 +643,7 @@ function updateUI(data) {
         if (data.cooldowns) globalCooldowns = data.cooldowns;
         if (data.supportedModels) globalSupportedModels = data.supportedModels;
         if (data.strategy && $('strategy-selector')) $('strategy-selector').value = data.strategy;
+        if (data.version && $('app-version')) $('app-version').textContent = 'v' + data.version;
     }
     
     const accounts = globalAccounts || [];

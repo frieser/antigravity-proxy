@@ -3,6 +3,9 @@ import { loadProxyConfig, getProxyConfig, updateProxyConfig } from "./config/man
 
 await loadProxyConfig();
 
+const pkg = await Bun.file("package.json").json();
+const APP_VERSION = pkg.version || "0.0.0";
+
 import { initManager, getBestAccount, updateAccountUsage, addAccount, getAccounts, removeAccount, getStrategy, setStrategy, saveAccounts, emitAccountFlash, eventBus, getEarliestReset, markCooldown, ensureFingerprint, regenerateFingerprint, getCooldowns, resetAccount, flagAccountChallenge, flagModelUnsupported, updateAccountProject, getFamilyName, resetAllCooldowns } from "./auth/manager";
 import { type SelectionStrategy, type AntigravityAccount } from "./auth/types";
 import { generateAuthUrl, exchangeCode, getUserEmail, getProjectId } from "./auth/oauth";
@@ -483,6 +486,7 @@ Bun.serve({
                 };
 
                 send("init", {
+                    version: APP_VERSION,
                     accounts: getAccounts(),
                     strategy: getStrategy(),
                     supportedModels: Array.from(supportedModelsCache).sort(),
@@ -520,6 +524,7 @@ Bun.serve({
 
     if (url.pathname === "/api/status") {
         return new Response(JSON.stringify({
+            version: APP_VERSION,
             accounts: getAccounts(),
             strategy: getStrategy(),
             supportedModels: Array.from(supportedModelsCache).sort()
