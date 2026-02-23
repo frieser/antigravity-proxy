@@ -45,6 +45,7 @@ const DEFAULT_CONFIG: ProxyConfig = {
       'default': 30000,
       'claude': 60000,
       'gemini-3-pro': 45000,
+      'gemini-3.1-pro': 45000,
       'thinking': 120000
     }
   },
