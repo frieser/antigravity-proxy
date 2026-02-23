@@ -40,6 +40,8 @@ const CLAUDE_MODEL_REGISTRY = [
     "claude-3-5-haiku-20241022",
     "claude-3-opus-20240229",
     "claude-opus-4-6-thinking",
+    "claude-sonnet-4-6",
+    "claude-sonnet-4-6-thinking",
     "claude-3-sonnet-20240229",
     "claude-3-haiku-20240307"
 ];
