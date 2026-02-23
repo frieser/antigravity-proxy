@@ -69,7 +69,7 @@ function parseQuotaResponse(data: any): AntigravityAccount['quota'] | null {
     if (!Array.isArray(rawModels) && typeof rawModels === 'object') {
         entries = Object.entries(rawModels);
     } else {
-        entries = rawModels.map(m => [m.model?.name || m.displayName || m.displayMetadata?.label || "Unknown", m]);
+        entries = rawModels.map((m: any) => [m.model?.name || m.displayName || m.displayMetadata?.label || "Unknown", m]);
     }
     
     const groups = new Map<string, any>();
