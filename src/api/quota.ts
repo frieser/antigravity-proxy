@@ -65,13 +65,16 @@ export const supportedModelsCache: Set<string> = new Set();
 function parseQuotaResponse(data: any): AntigravityAccount['quota'] | null {
     // Handle both array and map formats
     let rawModels = data.availableModels || data.models || [];
+    let entries: [string, any][] = [];
     if (!Array.isArray(rawModels) && typeof rawModels === 'object') {
-        rawModels = Object.values(rawModels);
+        entries = Object.entries(rawModels);
+    } else {
+        entries = rawModels.map(m => [m.model?.name || m.displayName || m.displayMetadata?.label || "Unknown", m]);
     }
     
     const groups = new Map<string, any>();
 
-    for (const m of rawModels) {
+    for (const [key, m] of entries) {
         if (!m.quotaInfo) continue;
 
         const label = m.displayMetadata?.label || m.displayName || m.model?.name || "Unknown";
@@ -81,9 +84,10 @@ function parseQuotaResponse(data: any): AntigravityAccount['quota'] | null {
         if (label === "Unknown" || lowerLabel === "unknown") continue;
 
         // Cache supported model ID/Name
-        if (m.model?.name) {
-            const modelName = m.model.name.replace("models/", "");
-            supportedModelsCache.add(modelName);
+        const modelId = key.replace("models/", "");
+        // If the key is a valid ID without spaces, cache it. Otherwise cache label.
+        if (modelId && modelId !== "Unknown" && !modelId.includes(" ")) {
+            supportedModelsCache.add(modelId);
         } else if (label !== "Unknown") {
             supportedModelsCache.add(label);
         }
