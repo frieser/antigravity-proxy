@@ -8,8 +8,9 @@ const APP_VERSION = pkg.version || "0.0.0";
 
 import { initManager, getBestAccount, updateAccountUsage, addAccount, getAccounts, removeAccount, getStrategy, setStrategy, saveAccounts, emitAccountFlash, eventBus, getEarliestReset, markCooldown, ensureFingerprint, regenerateFingerprint, getCooldowns, resetAccount, flagAccountChallenge, flagModelUnsupported, updateAccountProject, getFamilyName, resetAllCooldowns } from "./auth/manager";
 import { type SelectionStrategy, type AntigravityAccount } from "./auth/types";
+import { toPublicAccounts } from "./auth/public";
 import { generateAuthUrl, exchangeCode, getUserEmail, getProjectId } from "./auth/oauth";
-import { transformToGoogleBody, transformGoogleEventToOpenAI, createOpenAIStreamTransformer, getOriginalToolName } from "./utils/transform";
+import { transformToGoogleBody, transformGoogleEventToOpenAI, createOpenAIStreamTransformer, getOriginalToolName, isUnsupportedAntigravityVersionText } from "./utils/transform";
 import { getImpersonationHeaders, getGeminiCliHeaders, generateFingerprint } from "./utils/headers";
 import { refreshAllQuotas, fetchQuota, supportedModelsCache } from "./api/quota";
 import { parseGoogleError } from "./utils/errors";
@@ -423,6 +424,14 @@ Bun.serve({
                     continue;
                 }
 
+                if (isUnsupportedAntigravityVersionText(fullContent)) {
+                    console.warn(`[Version] Upstream rejected Antigravity client identity for ${account.email}; regenerating fingerprint and retrying.`);
+                    regenerateFingerprint(account.email);
+                    await updateAccountUsage(account.email, false, openaiBody.model, useCliPool ? "cli" : "sandbox", clientId, 426);
+                    attemptLogs.push({ email: account.email, status: 426, reason: "antigravity_version_unsupported" });
+                    continue;
+                }
+
                 await updateAccountUsage(account.email, true, openaiBody.model, useCliPool ? "cli" : "sandbox", clientId);
                return new Response(JSON.stringify(finalResponse), { 
                    headers: { 
@@ -487,14 +496,14 @@ Bun.serve({
 
                 send("init", {
                     version: APP_VERSION,
-                    accounts: getAccounts(),
+                    accounts: toPublicAccounts(getAccounts()),
                     strategy: getStrategy(),
                     supportedModels: Array.from(supportedModelsCache).sort(),
                     cooldowns: getCooldowns(),
                     logs: logBuffer
                 });
 
-                onUpdate = (data: any) => send("update", { ...data, supportedModels: Array.from(supportedModelsCache).sort() });
+                onUpdate = (data: any) => send("update", { ...data, accounts: data.accounts ? toPublicAccounts(data.accounts) : undefined, supportedModels: Array.from(supportedModelsCache).sort() });
                 onFlash = (data: { email: string, status: 'success' | 'error' }) => send("flash", data);
                 onLog = (msg: string) => send("log", { message: msg });
                 onCooldown = (data: any) => send("cooldown", data);
@@ -525,7 +534,7 @@ Bun.serve({
     if (url.pathname === "/api/status") {
         return new Response(JSON.stringify({
             version: APP_VERSION,
-            accounts: getAccounts(),
+            accounts: toPublicAccounts(getAccounts()),
             strategy: getStrategy(),
             supportedModels: Array.from(supportedModelsCache).sort()
         }), { headers: { "Content-Type": "application/json" } });

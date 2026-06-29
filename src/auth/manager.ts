@@ -1,7 +1,7 @@
 import { type AntigravityAccount, type SelectionStrategy } from "./types";
 import { loadConfig, saveConfig } from "./storage";
 import { refreshAccessToken, getProjectId } from "./oauth";
-import { generateFingerprint } from "../utils/headers";
+import { generateFingerprint, isAntigravityFingerprintCurrent } from "../utils/headers";
 import { getProxyConfig as getConfigFromManager } from "../config/manager";
 import { EventEmitter } from "events";
 
@@ -381,7 +381,7 @@ export function emitAccountFlash(email: string, status: 'success' | 'error' = 's
 }
 
 export function ensureFingerprint(account: AntigravityAccount): void {
-  if (!account.fingerprint || !account.fingerprint.clientMetadata?.sqmId) {
+  if (!account.fingerprint || !account.fingerprint.clientMetadata?.sqmId || !isAntigravityFingerprintCurrent(account.fingerprint)) {
     account.fingerprint = generateFingerprint(account.email);
     saveAccounts(accounts);
   }

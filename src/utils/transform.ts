@@ -1,8 +1,24 @@
 import { getSignature, cacheSignature } from "./cache";
 import { cleanJSONSchemaForAntigravity } from "./schema";
 import { getProxyConfig } from "../config/manager";
+import { getAntigravityUserAgent } from "./headers";
 
 const TOOL_NAME_REMAP_CACHE = new Map<string, string>();
+
+function getTransformConfig() {
+  try {
+    return getProxyConfig();
+  } catch {
+    return {
+      features: {
+        keepThinking: false,
+        sanitizeToolNames: true,
+        googleSearchGrounding: false,
+        groundingMode: "auto"
+      }
+    };
+  }
+}
 
 function sanitizeFunctionName(name: string): string {
   if (/^[a-zA-Z_]/.test(name) && /^[a-zA-Z0-9_]+$/.test(name)) {
@@ -46,7 +62,32 @@ const CLAUDE_MODEL_REGISTRY = [
     "claude-3-haiku-20240307"
 ];
 
+const DISPLAY_MODEL_ALIASES: Record<string, string> = {
+    "claude opus 4.6 thinking": "claude-opus-4-6-thinking",
+    "claude sonnet 4.6 thinking": "claude-sonnet-4-6-thinking",
+    "gpt-oss 120b medium": "gpt-oss-120b-medium",
+    "gemini 2.5 pro": "gemini-2.5-pro",
+    "gemini 3 flash": "gemini-3-flash",
+    "gemini 3.1 flash image": "gemini-3.1-flash-image",
+    "gemini 3.1 flash lite": "gemini-3.1-flash-lite",
+    "gemini 3.1 pro high": "gemini-3.1-pro-high",
+    "gemini 3.1 pro low": "gemini-3.1-pro-low",
+    "gemini 3.5 flash high": "gemini-3.5-flash-high",
+    "gemini 3.5 flash low": "gemini-3.5-flash-low",
+    "gemini 3.5 flash medium": "gemini-3.5-flash-medium"
+};
+
+function normalizeDisplayModelLabel(modelId: string): string {
+    const labelKey = modelId
+        .replace(/[()]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    return DISPLAY_MODEL_ALIASES[labelKey] || modelId;
+}
+
 function resolveModelId(modelId: string): string {
+    modelId = normalizeDisplayModelLabel(modelId);
     let cleanId = modelId.toLowerCase().replace(/^(openai|antigravity|custom_openai|litellm|google)\//i, "");
     cleanId = cleanId.replace(/^antigravity-/i, "");
     cleanId = cleanId.replace(/^gemini-claude-/i, "claude-");
@@ -70,6 +111,10 @@ function resolveModelId(modelId: string): string {
     return cleanId;
 }
 
+export function isUnsupportedAntigravityVersionText(text: string | undefined): boolean {
+  return !!text && /version\s+of\s+antigravity\s+is\s+no\s+longer\s+supported/i.test(text);
+}
+
 export function transformToGoogleBody(
   openaiBody: any, 
   projectId: string, 
@@ -78,7 +123,7 @@ export function transformToGoogleBody(
   sessionId?: string, 
   aggressive: boolean = false
 ): any {
-  const proxyConfig = getProxyConfig();
+  const proxyConfig = getTransformConfig();
   const rawModel = (openaiBody.model || "").toLowerCase();
   const resolvedModel = resolveModelId(openaiBody.model);
   let googleModel = resolvedModel;
@@ -423,7 +468,7 @@ You are pair programming with a USER to solve their coding task. The task may re
   return {
     project: projectId,
     model: googleModel,
-    userAgent: "antigravity",
+    userAgent: getAntigravityUserAgent(),
     requestId: `agent-${crypto.randomUUID()}`,
     requestType: "agent",
     request: googleRequest
@@ -556,6 +601,15 @@ export function createOpenAIStreamTransformer(model: string, requestId: string, 
   const encoder = new TextEncoder();
   let buffer = "";
   let currentHasPriorToolCalls = hasPriorToolCalls;
+  let unsupportedVersionDetected = false;
+
+  const unsupportedVersionErrorEvent = () => `data: ${JSON.stringify({
+    error: {
+      message: "Antigravity upstream rejected this client version. Update ANTIGRAVITY_VERSION and refresh account fingerprints.",
+      type: "upstream_version_unsupported",
+      code: "antigravity_version_unsupported"
+    }
+  })}\n\n`;
 
   return new TransformStream({
     transform(chunk, controller) {
@@ -577,13 +631,20 @@ export function createOpenAIStreamTransformer(model: string, requestId: string, 
             const openaiEvent = transformGoogleEventToOpenAI(googleEvent, model, requestId, currentHasPriorToolCalls);
             
             if (openaiEvent) {
+              const choice = openaiEvent.choices?.[0];
+              const delta = choice?.delta;
+              if (!unsupportedVersionDetected && isUnsupportedAntigravityVersionText(delta?.content)) {
+                unsupportedVersionDetected = true;
+                controller.enqueue(encoder.encode(unsupportedVersionErrorEvent()));
+                continue;
+              }
+              if (unsupportedVersionDetected) continue;
+
               if (sessionId && openaiEvent._signature && openaiEvent._thought) {
                   cacheSignature(sessionId, openaiEvent._thought, openaiEvent._signature);
                   console.log(`[Cache] Signature cached for conversation ${sessionId}`);
               }
 
-              const choice = openaiEvent.choices?.[0];
-              const delta = choice?.delta;
               const hasMeaningfulContent = (delta && (delta.content || delta.reasoning_content || delta.tool_calls)) || 
                                           (choice && choice.finish_reason) || 
                                           openaiEvent.usage;
@@ -611,6 +672,13 @@ export function createOpenAIStreamTransformer(model: string, requestId: string, 
             const googleEvent = JSON.parse(dataStr);
             const openaiEvent = transformGoogleEventToOpenAI(googleEvent, model, requestId, currentHasPriorToolCalls);
             if (openaiEvent) {
+              const delta = openaiEvent.choices?.[0]?.delta;
+              if (!unsupportedVersionDetected && isUnsupportedAntigravityVersionText(delta?.content)) {
+                unsupportedVersionDetected = true;
+                controller.enqueue(encoder.encode(unsupportedVersionErrorEvent()));
+                return;
+              }
+              if (unsupportedVersionDetected) return;
               controller.enqueue(encoder.encode(`data: ${JSON.stringify(openaiEvent)}\n\n`));
             }
           } catch (e) {

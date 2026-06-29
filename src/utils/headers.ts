@@ -15,7 +15,7 @@ export const OAUTH_CONFIG = {
   redirectUri: "http://localhost:3000/oauth-callback"
 };
 
-const ANTIGRAVITY_VERSION = "2.0.1";
+export const ANTIGRAVITY_VERSION = process.env.ANTIGRAVITY_VERSION || "1.0.13";
 
 const PLATFORMS = ["darwin/x64", "darwin/arm64"] as const;
 
@@ -51,6 +51,14 @@ const GEMINI_CLI_API_CLIENTS = [
 
 function randomFrom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+export function getAntigravityUserAgent(): string {
+  return `antigravity/${ANTIGRAVITY_VERSION}`;
+}
+
+export function isAntigravityFingerprintCurrent(fingerprint?: DeviceFingerprint): boolean {
+  return !!fingerprint?.userAgent?.startsWith(`${getAntigravityUserAgent()} `);
 }
 
 function generateDeviceId(): string {
@@ -91,7 +99,7 @@ export function generateFingerprint(email?: string): DeviceFingerprint {
   const sqmId = crypto.randomUUID();
 
   return {
-    userAgent: `antigravity/${ANTIGRAVITY_VERSION} ${platform}`,
+    userAgent: `${getAntigravityUserAgent()} ${platform}`,
     quotaUser: email ? generateStableQuotaUser(email) : generateQuotaUser(),
     deviceId: email ? generateStableQuotaUser(email).replace('device-', '') : generateDeviceId(),
     platform: platform,
@@ -162,4 +170,3 @@ export function getGeminiCliHeaders(accessToken: string, fingerprint?: DeviceFin
 
   return headers;
 }
-

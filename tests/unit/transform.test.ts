@@ -1,6 +1,7 @@
 
 import { describe, expect, test } from "bun:test";
-import { transformToGoogleBody, transformGoogleEventToOpenAI } from "../../src/utils/transform";
+import { transformToGoogleBody, transformGoogleEventToOpenAI, createOpenAIStreamTransformer, isUnsupportedAntigravityVersionText } from "../../src/utils/transform";
+import { ANTIGRAVITY_VERSION } from "../../src/utils/headers";
 
 describe("Unit Tests: transformToGoogleBody", () => {
   test("Basic message transformation", () => {
@@ -30,6 +31,26 @@ describe("Unit Tests: transformToGoogleBody", () => {
 
     const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
     expect(result.model).toBe("gemini-2.0-flash");
+  });
+
+  test("Versioned Antigravity user agent is sent in the request body", () => {
+    const openaiBody = {
+      model: "antigravity-gemini-3-flash",
+      messages: [{ role: "user", content: "Hi" }]
+    };
+
+    const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
+    expect(result.userAgent).toBe(`antigravity/${ANTIGRAVITY_VERSION}`);
+  });
+
+  test("Display model labels normalize to backend model IDs", () => {
+    const openaiBody = {
+      model: "Gemini 3 Flash",
+      messages: [{ role: "user", content: "Hi" }]
+    };
+
+    const result = transformToGoogleBody(openaiBody, "p", false, "us-central1");
+    expect(result.model).toBe("gemini-3-flash");
   });
 
   test("Thinking level extraction for CLI", () => {
@@ -196,5 +217,25 @@ describe("Unit Tests: transformGoogleEventToOpenAI", () => {
     const googleData = { candidates: [] };
     const result = transformGoogleEventToOpenAI(googleData, "model");
     expect(result).toBeNull();
+  });
+
+  test("Unsupported Antigravity version sentinel is detected", () => {
+    expect(isUnsupportedAntigravityVersionText("This version of Antigravity is no longer supported. Please upgrade to receive the latest features.")).toBe(true);
+    expect(isUnsupportedAntigravityVersionText("normal model response")).toBe(false);
+  });
+
+  test("Streaming unsupported-version sentinel is emitted as an error event", async () => {
+    const upstream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('data: {"candidates":[{"content":{"parts":[{"text":"This version of Antigravity is no longer supported. Please upgrade to receive the latest features."}]},"finishReason":"STOP"}]}\n\n'));
+        controller.close();
+      }
+    });
+
+    const transformed = upstream.pipeThrough(createOpenAIStreamTransformer("model", "req-123", false));
+    const text = await new Response(transformed).text();
+
+    expect(text).toContain('"code":"antigravity_version_unsupported"');
+    expect(text).not.toContain('"delta":{"content":"This version of Antigravity is no longer supported');
   });
 });
